@@ -601,7 +601,7 @@ html, body {
   </div>
 </div>
 
-<!-- ══ SCREEN 5: BẢO MẬT ════════════════════════════════ -->
+<!-- ══ SCREEN 5: CÀI ĐẶT ═════════════════════════════════ -->
 <div id="s-settings" class="screen">
   <div class="topbar">
     <button class="btn-icon" onclick="go('s-entry')">←</button>
@@ -610,17 +610,17 @@ html, body {
   <div class="set-scroll">
 
     <!-- Lịch sử giao dịch -->
-    <div class="set-card">
-      <div class="pin-setup-row" onclick="openHist('s-settings')" style="cursor:pointer">
+    <div class="set-card" onclick="openHist('s-settings')" style="cursor:pointer">
+      <div class="pin-setup-row">
         <div>
-          <div class="pin-setup-label">📋 Lịch sử hôm nay</div>
-          <div class="pin-setup-sub" id="hist-quick-sub">Xem tất cả giao dịch trong ngày</div>
+          <div class="pin-setup-label">📋 Lịch sử giao dịch</div>
+          <div class="pin-setup-sub" id="hist-quick-sub">Xem tất cả giao dịch đã lưu</div>
         </div>
-        <div class="pin-badge" style="background:var(--surface2);border-color:var(--border);color:var(--sub)">Xem →</div>
+        <div class="pin-badge" style="background:var(--surface2);border-color:var(--border);color:var(--sub);pointer-events:none">Xem →</div>
       </div>
     </div>
 
-    <!-- Mã PIN -->
+    <!-- PIN Admin -->
     <div class="set-card">
       <div class="pin-setup-row">
         <div>
@@ -633,6 +633,7 @@ html, body {
     <div class="set-hint">
       🔐 Sau khi đặt PIN, nhân viên không thể xoá lịch sử giao dịch. Chỉ admin biết mã PIN mới chỉnh sửa được.
     </div>
+
   </div>
 </div>
 
@@ -681,7 +682,7 @@ const SERVICES = [
 
 const STAFF = ['Duyên','Thy','Thuỳ','Trân','Ngọc'];
 const QUICK = [50000, 100000, 150000, 200000];
-const TTL   = 24 * 60 * 60 * 1000; // 24h
+const TTL   = 90 * 24 * 60 * 60 * 1000; // 90 ngày
 
 // ══ STATE ═════════════════════════════════════════════════
 let cart     = [];   // [{ico, label, price}]
@@ -789,7 +790,7 @@ function donePrice() {
   syncNextBtn();
 }
 
-// Render giỏ
+// Render giỏ — KHÔNG dùng innerHTML để tránh mất #cart-hint khỏi DOM
 function renderCart() {
   const box   = document.getElementById('cart-box');
   const hint  = document.getElementById('cart-hint');
@@ -797,9 +798,10 @@ function renderCart() {
   const tamt  = document.getElementById('cart-total-amt');
   const total = cart.reduce((s,c)=>s+c.price,0);
 
+  // Xoá chỉ các .cart-row, giữ nguyên hint trong DOM
+  Array.from(box.querySelectorAll('.cart-row')).forEach(el=>el.remove());
+
   if (!cart.length) {
-    box.innerHTML = '';
-    box.appendChild(hint);
     hint.style.display = 'block';
     tbar.style.display = 'none';
     return;
@@ -807,10 +809,13 @@ function renderCart() {
 
   hint.style.display = 'none';
   tbar.style.display = 'flex';
-  tamt.textContent = total.toLocaleString('vi-VN') + 'đ';
+  tamt.textContent   = total.toLocaleString('vi-VN') + 'đ';
 
-  box.innerHTML = cart.map((c,i) => `
-    <div class="cart-row">
+  // Thêm từng .cart-row vào trước tbar (tbar nằm ngoài cart-box nên append vào box là đúng)
+  cart.forEach((c,i) => {
+    const row = document.createElement('div');
+    row.className = 'cart-row';
+    row.innerHTML = `
       <span class="cart-ico">${c.ico}</span>
       <span class="cart-name">${c.label}</span>
       <span class="cart-price" onclick="editCartItem(${i})">
@@ -819,8 +824,9 @@ function renderCart() {
           : '<span class="none">Nhập giá ✎</span>'}
       </span>
       <button class="cart-del" onclick="delCartItem(${i})">✕</button>
-    </div>
-  `).join('');
+    `;
+    box.appendChild(row);
+  });
 }
 
 function editCartItem(i) {
@@ -942,6 +948,7 @@ async function doFinish() {
     // Lưu lịch sử local
     const group = {
       id:      Date.now(),
+      savedAt: Date.now(),
       date:    now.toLocaleDateString('vi-VN'),
       time:    now.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
       staff:   curStaff,
@@ -951,7 +958,7 @@ async function doFinish() {
       total,
     };
     sessions.unshift(group);
-    if (sessions.length > 80) sessions.pop();
+    if (sessions.length > 2000) sessions.pop();
     saveSessions();
 
     // Màn thành công
@@ -970,11 +977,29 @@ async function doFinish() {
 
 // ══ GIAO DỊCH MỚI ════════════════════════════════════════
 function newEntry() {
-  cart=[]; raw=''; curStaff=''; editIdx=-1;
+// ══ GIAO DỊCH MỚI ════════════════════════════════════════
+function newEntry() {
+  cart=[]; raw=''; curStaff=''; editIdx=-1; curPay='Tiền mặt';
+
+  // Ẩn bàn phím
   document.getElementById('keypad-wrap').classList.remove('show');
   document.getElementById('svc-grid').style.display = 'grid';
   document.getElementById('btn-next').style.display = 'block';
-  renderCart(); renderSvcGrid(); syncNextBtn();
+
+  // Reset ghi chú
+  const noteEl = document.getElementById('note-inp');
+  if (noteEl) noteEl.value = '';
+
+  // Reset cart UI mà KHÔNG dùng innerHTML (tránh mất #cart-hint)
+  const box  = document.getElementById('cart-box');
+  const hint = document.getElementById('cart-hint');
+  Array.from(box.querySelectorAll('.cart-row')).forEach(el=>el.remove());
+  if (hint) hint.style.display = 'block';
+  const tbar = document.getElementById('cart-total-bar');
+  if (tbar) tbar.style.display = 'none';
+
+  renderSvcGrid();
+  syncNextBtn();
   go('s-entry');
 }
 
@@ -1020,30 +1045,34 @@ function openHist(from) {
   go('s-hist');
 }
 
-// ══ LƯU LỊCH SỬ (localStorage 24h) ══════════════════════
+// ══ LƯU LỊCH SỬ (localStorage 90 ngày, xoá từng item quá hạn) ══
 function saveSessions() {
-  localStorage.setItem('kn_sess', JSON.stringify({ ts: Date.now(), data: sessions }));
+  sessions.forEach(s=>{ if(!s.savedAt) s.savedAt = s.id||Date.now(); });
+  localStorage.setItem('kn_sess', JSON.stringify(sessions));
 }
 function loadSessions() {
   try {
     const r = localStorage.getItem('kn_sess');
     if (!r) return;
-    const o = JSON.parse(r);
-    if (Date.now() - o.ts > TTL) { localStorage.removeItem('kn_sess'); return; }
-    sessions = o.data || [];
-  } catch(e) { sessions = []; }
+    const raw = JSON.parse(r);
+    // Tương thích format cũ { ts, data }
+    const arr = Array.isArray(raw) ? raw : (raw.data||[]);
+    const cutoff = Date.now() - TTL;
+    sessions = arr.filter(s=>(s.savedAt||s.id||0) > cutoff);
+    if (sessions.length < arr.length) saveSessions();
+  } catch(e) { sessions=[]; }
 }
 
 // ══ CÀI ĐẶT ══════════════════════════════════════════════
 function openSettings() {
   updatePinUI();
-  // Hiển thị tổng nhanh trên nút lịch sử
-  const total = sessions.reduce((s,h)=>s+h.total,0);
-  const sub   = document.getElementById('hist-quick-sub');
+  // Tóm tắt nhanh lịch sử
+  const sub = document.getElementById('hist-quick-sub');
   if (sub) {
+    const total = sessions.reduce((s,h)=>s+h.total,0);
     sub.textContent = sessions.length
-      ? `${sessions.length} giao dịch  ·  ${total.toLocaleString('vi-VN')}đ hôm nay`
-      : 'Chưa có giao dịch nào hôm nay';
+      ? `${sessions.length} giao dịch  ·  ${total.toLocaleString('vi-VN')}đ đã lưu`
+      : 'Chưa có giao dịch nào';
   }
   go('s-settings');
 }
