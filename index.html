@@ -441,7 +441,7 @@
 const CONFIG = {
   shopName: 'KOL Nails Studio',
   staff: ['Duyên', 'Thy', 'Thuỳ', 'Trân', 'Ngọc'],
-  scriptUrl: localStorage.getItem('kol_script_url') || 'https://script.google.com/macros/s/AKfycbx1qAf1TGLGk-Zbz4J9RW9sdt5VvAUoiVcJxH_KukC998gNvMORrJQd2Kqg_8Gd9T6k/exec',
+  scriptUrl: localStorage.getItem('kol_script_url') || 'https://script.google.com/macros/s/AKfycbxFNxifCffz_jyVCP8MHJEnriZ3WR9cw3zqayG23gNc6jW_nRl8ffBs_aCYefj71qW4/exec',
   priceMultiplier: 1000  // nhập 100 → 100.000đ
 };
 
@@ -629,19 +629,18 @@ async function saveOrder() {
 async function syncToSheets(order) {
   if (!CONFIG.scriptUrl) return false;
   try {
-    const body = {
+    const params = new URLSearchParams({
       customer: order.customer,
-      service: order.services.map(s => s.name).join(", "),
+      service: order.services.map(s => s.name).join(', '),
       price: order.total,
       payment: order.payment === 'cash' ? 'Tiền mặt' : 'Chuyển khoản',
       staff: order.staff,
       note: order.note || ''
-    };
+    });
     await fetch(CONFIG.scriptUrl, {
       method: 'POST',
       mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: params
     });
     return true;
   } catch { return false; }
