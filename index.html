@@ -441,7 +441,7 @@
 const CONFIG = {
   shopName: 'KOL Nails Studio',
   staff: ['Duyên', 'Thy', 'Thuỳ', 'Trân', 'Ngọc'],
-  scriptUrl: localStorage.getItem('https://script.google.com/macros/s/AKfycbxFNxifCffz_jyVCP8MHJEnriZ3WR9cw3zqayG23gNc6jW_nRl8ffBs_aCYefj71qW4/exec') || '',
+  scriptUrl: localStorage.getItem('kol_script_url') || 'https://script.google.com/macros/s/AKfycbxFNxifCffz_jyVCP8MHJEnriZ3WR9cw3zqayG23gNc6jW_nRl8ffBs_aCYefj71qW4/exec',
   priceMultiplier: 1000  // nhập 100 → 100.000đ
 };
 
@@ -470,7 +470,7 @@ function init() {
   window.addEventListener('offline', onOffline);
   
   // Load script URL if available
-  const saved = localStorage.getItem('https://script.google.com/macros/s/AKfycbxFNxifCffz_jyVCP8MHJEnriZ3WR9cw3zqayG23gNc6jW_nRl8ffBs_aCYefj71qW4/exec');
+  const saved = localStorage.getItem('kol_script_url');
   if (saved) CONFIG.scriptUrl = saved;
 }
 
@@ -843,7 +843,7 @@ init();
 // Allow setting script URL via console
 window.setScriptUrl = function(url) {
   CONFIG.scriptUrl = url;
-  localStorage.setItem('https://script.google.com/macros/s/AKfycbxFNxifCffz_jyVCP8MHJEnriZ3WR9cw3zqayG23gNc6jW_nRl8ffBs_aCYefj71qW4/exec', url);
+  localStorage.setItem('kol_script_url', url);
   showToast('✓ Đã lưu URL Google Sheets!', 'success');
 };
 </script>
