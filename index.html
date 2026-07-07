@@ -630,7 +630,6 @@ async function syncToSheets(order) {
   if (!CONFIG.scriptUrl) return false;
   try {
     const params = new URLSearchParams({
-      orderId: order.id,
       customer: order.customer,
       service: order.services.map(s => s.name).join(', '),
       price: order.total,
