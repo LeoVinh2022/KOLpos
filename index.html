@@ -629,7 +629,7 @@ async function saveOrder() {
 async function syncToSheets(order) {
   if (!CONFIG.scriptUrl) return false;
   try {
-    const params = new URLSearchParams({
+    const payload = JSON.stringify({
       customer: order.customer,
       service: order.services.map(s => s.name).join(', '),
       price: order.total,
@@ -640,7 +640,8 @@ async function syncToSheets(order) {
     await fetch(CONFIG.scriptUrl, {
       method: 'POST',
       mode: 'no-cors',
-      body: params
+      headers: { 'Content-Type': 'text/plain' },
+      body: payload
     });
     return true;
   } catch { return false; }
