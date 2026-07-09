@@ -629,18 +629,17 @@ async function saveOrder() {
 async function syncToSheets(order) {
   if (!CONFIG.scriptUrl) return false;
   try {
-    const qs = new URLSearchParams({
-      v: '1',
-      khach: order.customer,
-      dv: order.services.map(s => s.name).join(', '),
-      gia: order.total,
-      tt: order.payment === 'cash' ? 'Tiền mặt' : 'Chuyển khoản',
-      nv: order.staff,
-      gc: order.note || ''
-    }).toString();
-    await fetch(CONFIG.scriptUrl + '?' + qs, {
-      method: 'GET',
-      mode: 'no-cors'
+    await fetch(CONFIG.scriptUrl, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        customer: order.customer,
+        service:  order.services.map(s => s.name).join(', '),
+        price:    order.total,
+        payment:  order.payment === 'cash' ? 'Tiền mặt' : 'Chuyển khoản',
+        staff:    order.staff,
+        note:     order.note || ''
+      })
     });
     return true;
   } catch { return false; }
