@@ -629,9 +629,10 @@ async function saveOrder() {
 async function syncToSheets(order) {
   if (!CONFIG.scriptUrl) return false;
   try {
-    const res = await fetch(CONFIG.scriptUrl, {
+    await fetch(CONFIG.scriptUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         customer: order.customer,
         service:  order.services.map(s => s.name).join(', '),
@@ -641,8 +642,7 @@ async function syncToSheets(order) {
         note:     order.note || ''
       })
     });
-    const json = await res.json();
-    return json.status === 'ok';
+    return true;
   } catch { return false; }
 }
 
