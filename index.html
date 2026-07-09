@@ -629,10 +629,10 @@ async function saveOrder() {
 async function syncToSheets(order) {
   if (!CONFIG.scriptUrl) return false;
   try {
-    await fetch(CONFIG.scriptUrl, {
-      method:  'POST',
+    const res = await fetch(CONFIG.scriptUrl, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
+      body: JSON.stringify({
         customer: order.customer,
         service:  order.services.map(s => s.name).join(', '),
         price:    order.total,
@@ -641,7 +641,8 @@ async function syncToSheets(order) {
         note:     order.note || ''
       })
     });
-    return true;
+    const json = await res.json();
+    return json.status === 'ok';
   } catch { return false; }
 }
 
@@ -769,8 +770,6 @@ function onOnline() {
   badge.className = 'sync-badge online';
   document.getElementById('syncText').textContent = 'Online';
   updatePendingBar();
-  // Auto-sync
-  if (CONFIG.scriptUrl) syncPending();
 }
 function onOffline() {
   const badge = document.getElementById('syncBadge');
