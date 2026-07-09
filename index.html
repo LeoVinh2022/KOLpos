@@ -629,14 +629,14 @@ async function saveOrder() {
 async function syncToSheets(order) {
   if (!CONFIG.scriptUrl) return false;
   try {
-    const qs = '?customer=' + encodeURIComponent(order.customer)
+    const qs = '?khach=' + encodeURIComponent(order.customer)
       + '&service=' + encodeURIComponent(order.services.map(s => s.name).join(', '))
       + '&price=' + encodeURIComponent(order.total)
       + '&payment=' + encodeURIComponent(order.payment === 'cash' ? 'Tiền mặt' : 'Chuyển khoản')
       + '&staff=' + encodeURIComponent(order.staff)
       + '&note=' + encodeURIComponent(order.note || '');
     await fetch(CONFIG.scriptUrl + qs, {
-      method: 'GET',
+      method: 'POST',
       mode: 'no-cors'
     });
     return true;
