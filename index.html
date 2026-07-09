@@ -629,18 +629,15 @@ async function saveOrder() {
 async function syncToSheets(order) {
   if (!CONFIG.scriptUrl) return false;
   try {
-    const payload = JSON.stringify({
-      customer: order.customer,
-      service: order.services.map(s => s.name).join(', '),
-      price: order.total,
-      payment: order.payment === 'cash' ? 'Tiền mặt' : 'Chuyển khoản',
-      staff: order.staff,
-      note: order.note || ''
-    });
+    const payload = 'customer=' + encodeURIComponent(order.customer)
+      + '&service=' + encodeURIComponent(order.services.map(s => s.name).join(', '))
+      + '&price=' + encodeURIComponent(order.total)
+      + '&payment=' + encodeURIComponent(order.payment === 'cash' ? 'Tiền mặt' : 'Chuyển khoản')
+      + '&staff=' + encodeURIComponent(order.staff)
+      + '&note=' + encodeURIComponent(order.note || '');
     await fetch(CONFIG.scriptUrl, {
       method: 'POST',
       mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
       body: payload
     });
     return true;
