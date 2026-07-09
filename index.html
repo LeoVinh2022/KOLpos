@@ -629,7 +629,8 @@ async function saveOrder() {
 async function syncToSheets(order) {
   if (!CONFIG.scriptUrl) return false;
   try {
-    const qs = '?khach=' + encodeURIComponent(order.customer)
+    const qs = '?action=save'
+      + '&khach=' + encodeURIComponent(order.customer)
       + '&service=' + encodeURIComponent(order.services.map(s => s.name).join(', '))
       + '&price=' + encodeURIComponent(order.total)
       + '&payment=' + encodeURIComponent(order.payment === 'cash' ? 'Tiền mặt' : 'Chuyển khoản')
