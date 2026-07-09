@@ -629,16 +629,19 @@ async function saveOrder() {
 async function syncToSheets(order) {
   if (!CONFIG.scriptUrl) return false;
   try {
-    const qs = '?action=save'
-      + '&khach=' + encodeURIComponent(order.customer)
-      + '&service=' + encodeURIComponent(order.services.map(s => s.name).join(', '))
-      + '&price=' + encodeURIComponent(order.total)
-      + '&payment=' + encodeURIComponent(order.payment === 'cash' ? 'Tiền mặt' : 'Chuyển khoản')
-      + '&staff=' + encodeURIComponent(order.staff)
-      + '&note=' + encodeURIComponent(order.note || '');
-    await fetch(CONFIG.scriptUrl + qs, {
+    // Gửi dạng pipe-separated string — e.postData.contents đọc được toàn bộ
+    const payload = [
+      order.customer,
+      order.services.map(s => s.name).join(', '),
+      order.total,
+      order.payment === 'cash' ? 'Tiền mặt' : 'Chuyển khoản',
+      order.staff,
+      order.note || ''
+    ].join('|SPLIT|');
+    await fetch(CONFIG.scriptUrl, {
       method: 'POST',
-      mode: 'no-cors'
+      mode: 'no-cors',
+      body: payload
     });
     return true;
   } catch { return false; }
