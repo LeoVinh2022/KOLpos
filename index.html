@@ -162,6 +162,7 @@ textarea.inp { resize:none; min-height:64px; }
 <div class="tabs">
   <button class="tab on" onclick="goTab('form',this)">📝 Đơn mới</button>
   <button class="tab"    onclick="goTab('hist',this)">📋 Lịch sử</button>
+  <button class="tab"    onclick="goTab('cfg',this)" id="tabCfg">⚙️ Cài đặt</button>
 </div>
 
 <div class="pane on" id="pane-form">
@@ -380,20 +381,25 @@ async function saveOrder() {
 // text/plain là "simple request" → không cần preflight → GAS nhận được
 async function pushToSheet(order) {
   if (!CFG.scriptUrl) return false;
+  const svcs = order.svcs.filter(s => s.name);
+  if (!svcs.length) return false;
   try {
-    await fetch(CFG.scriptUrl, {
-      method:  'POST',
-      mode:    'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        customer: order.customer,
-        service:  order.svcs.map(s=>s.name).join(', '),
-        price:    order.total,
-        payment:  order.pay === 'cash' ? 'Tiền mặt' : 'Chuyển khoản',
-        staff:    order.staff,
-        note:     order.note || ''
-      })
-    });
+    // Mỗi dịch vụ → 1 dòng riêng trong sheet
+    for (const svc of svcs) {
+      await fetch(CFG.scriptUrl, {
+        method:  'POST',
+        mode:    'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          customer: order.customer,
+          service:  svc.name,
+          price:    svc.price,
+          payment:  order.pay === 'cash' ? 'Tiền mặt' : 'Chuyển khoản',
+          staff:    order.staff,
+          note:     order.note || ''
+        })
+      });
+    }
     return true;
   } catch { return false; }
 }
